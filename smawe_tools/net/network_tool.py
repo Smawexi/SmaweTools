@@ -2,15 +2,12 @@ import socket
 import re
 import logging
 import subprocess
-import smawe_tools.settings as settings
+import importlib
 import sys
 from types import ModuleType
 from typing import Union
-
-try:
-    from retrying import retry
-except ModuleNotFoundError:
-    from smawe_tools import retry
+from smawe_tools.retrying import retry
+_settings = importlib.import_module(".settings", "smawe_tools")
 
 
 def _get_domain(url: str) -> str:
@@ -25,7 +22,7 @@ def _get_domain(url: str) -> str:
     raise ValueError("please enter a valid url")
 
 
-def get_ip(url: str = None, domain: str = None) -> settings.List[str]:
+def get_ip(url: str = None, domain: str = None) -> _settings.List[str]:
     """
     get url or domain ip
     :param url: can be url or domain
@@ -58,11 +55,11 @@ def get_ip(url: str = None, domain: str = None) -> settings.List[str]:
 
 
 @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-def _install_requires(cmd: Union[str, settings.List[str]]):
+def _install_requires(cmd: Union[str, _settings.List[str]]):
     subprocess.run(cmd)
 
 
-def _run_cmd(cmd: Union[str, settings.List[str]]) -> ModuleType:
+def _run_cmd(cmd: Union[str, _settings.List[str]]) -> ModuleType:
     completed_p = subprocess.run(cmd)
     if not completed_p.returncode:
         logging.info("\033[1;34mThe dependent library is already installed\033[0m")
@@ -83,7 +80,7 @@ def get_pubnet_ip() -> str:
         import requests
     except ModuleNotFoundError:
         logging.warning("\033[1;34mInstalling dependent libraries: requests\033[0m")
-        if settings.OS_NAME == "Windows":
+        if _settings.OS_NAME == "Windows":
             requests = _run_cmd("{} -m pip install requests".format(sys.executable))
         else:
             requests = _run_cmd("{} -m pip install requests".format(sys.executable).split())

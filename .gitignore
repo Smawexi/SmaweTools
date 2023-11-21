@@ -1,5 +1,6 @@
 tests/
 smawe_tools/**/__pycache__/
 **/*.pyc
-git
 .idea/
+dist/
+smawe_tools.egg-info/

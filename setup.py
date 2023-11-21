@@ -26,7 +26,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     packages=find_packages(exclude=('tests',)),
-    install_requires=['colorama'],
+    install_requires=['colorama', 'requests'],
     include_package_data=True,
     license='MIT',
     classifiers=[

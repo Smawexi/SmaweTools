@@ -7,7 +7,7 @@
 例如: from smawe_tools import retry  
 
 - rename(src=""):  
-    对src路径指定的目录中的文件进行重命名  
+    对src路径指定的目录中的文件进行重命名(支持绝对路径和相对路径)  
     格式为第xxx章  
     第某某章必须在一亿章以下  
     例如:  

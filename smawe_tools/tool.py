@@ -16,6 +16,7 @@ def rename(src=""):
     第某某章必须在一亿章以下
     列如:
         第一百章.txt -> 第100章.txt
+    :param src: 要重命名的目标路径(支持相对路径和绝对路径)
     :return:
     """
     src = src.strip()
@@ -23,7 +24,7 @@ def rename(src=""):
     if not src:
         raise ValueError("src cannot is empty")
 
-    root_path = src
+    root_path = os.path.abspath(src)
 
     for f in os.listdir(src):
         if not _isfile(f):
@@ -121,4 +122,10 @@ def _calculate_lt_1yi(s: str = "") -> int:
         return _calculate_lt_w(s)
 
 
-text_conversion = _calculate_lt_1yi
+def text_conversion(s: str) -> int:
+    """
+    文本转换, 一百 -> 100, 九千九十九 -> 9099
+    :param s:
+    :return:
+    """
+    return _calculate_lt_1yi(s)

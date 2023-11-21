@@ -3,7 +3,7 @@ import time
 import random
 import logging
 import importlib
-exception = importlib.import_module(".exception", package="smawe_tools")
+_exception = importlib.import_module(".exception", package="smawe_tools")
 
 
 class Retrying(object):
@@ -35,7 +35,7 @@ class Retrying(object):
 
         while True:
             if current_retry_num > self._stop_max_attempt_number:
-                raise exception.MaxRetryError("Exceeded maximum retry count error")
+                raise _exception.MaxRetryError("Exceeded maximum retry count error")
             try:
                 if current_retry_num:
                     logging.info("\033[1;34mThis is currently the {} retry\033[0m".format(current_retry_num))

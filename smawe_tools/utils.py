@@ -48,4 +48,3 @@ class Email:
 
     def send_mail(self, **kwargs):
         pass
-

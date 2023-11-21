@@ -1,6 +1,7 @@
 import platform
 import sys
-import smawe_tools.struct as struct
+import importlib
+struct_ = importlib.import_module(".struct", package="smawe_tools")
 try:
     from colorama import init as _init
     _init(autoreset=True)
@@ -11,7 +12,6 @@ _IS_LESS_THEN_PY39 = float(".".join(platform.python_version_tuple()[:-1])) < 3.9
 if _IS_LESS_THEN_PY39:
     import typing
     List = typing.List
-    del typing
 else:
     List = list
 
@@ -24,4 +24,4 @@ def modify_encoding(encoding="utf-8", language_code="en_US"):
     _locale._getdefaultlocale = lambda *args, **kwargs: (language_code, encoding)
 
 
-sys.modules[__name__].__class__ = struct.LoggingModule
+sys.modules[__name__].__class__ = struct_.LoggingModule
