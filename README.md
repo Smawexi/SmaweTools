@@ -1,7 +1,3 @@
-### ***本文档是由作者本人编写，难免会出现一些小问题，例如打错字等，发现后会及时改正***
-
----
-
 ### **核心函数**
 以下函数都可以从smawe_tools包中进行导入  
 例如: from smawe_tools import retry  
@@ -35,13 +31,14 @@
     return: str
 
 
-- retry(stop_max_attempt_number=None, wait_random_min=None, wait_random_max=None, retry_exception=None):  
+- retry(stop_max_attempt_number=None, wait_random_min=None, wait_random_max=None, retry_on_exception=None):  
+    0.3.6中添加了实例方法, 类方法, 静态方法的支持  
     发生异常进行重试，默认进行1次重试且每次重试前睡眠0-1s的随机时间，超过最大重试次数后还发生异常，则抛出MaxRetryError异常 
     重试期间如果正常返回结果或没发生异常，则不进行重试。
     stop_max_attempt_number: 停止时的最大重试次数，超出次数后还发生异常，则抛出MaxRetryError异常  
     wait_random_min：随机等待的最小时间(单位毫秒)  
     wait_random_max: 随机等待的最大时间(单位毫秒)  
-    retry_exception: 要重试的异常类型，默认为Exception
+    retry_on_exception: 要重试的异常类型，默认为Exception
   
 - modify_encoding():   
     此函数要从smawe_tools.settings模块进行导入, 如: 
@@ -140,7 +137,7 @@ error_logger = ErrorLogger(
     from_addr="xxxx@qq.com",
     to_addrs=["xyzxxxx@qq.com", "abcdefg@qq.com"],
     subject="python test",
-    password="xxxxxxxxx",
+    password="xxxxxxxxx", #这里是QQ授权码
     handler_level=logging.INFO,
     logger_level=logging.INFO
 )
