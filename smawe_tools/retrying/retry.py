@@ -21,7 +21,7 @@ class Retrying(object):
             raise ValueError("func param error")
         functools.update_wrapper(self, func)
         self._func = func
-
+        self._f = None
         self._retry_on_exception = retry_on_exception if retry_on_exception is not None else Exception
 
         self._stop_max_attempt_number = stop_max_attempt_number if stop_max_attempt_number else 1
@@ -34,10 +34,11 @@ class Retrying(object):
     def __get__(self, instance, owner=None):
         if isinstance(self._func, (staticmethod, classmethod)):
             self._f = self._func.__get__(instance, owner)
+            functools.update_wrapper(self, self._f)
             return self
 
         self._f = functools.partial(self._func, instance)
-
+        functools.update_wrapper(self, self._func)
         return self
 
     def __call__(self, *args, **kwargs):
@@ -49,7 +50,9 @@ class Retrying(object):
                 if current_retry_num:
                     logging.info("\033[1;34mThis is currently the {} retry\033[0m".format(current_retry_num))
                     time.sleep(random.uniform(self._wait_random_min, self._wait_random_max))
-                return self._f(*args, **kwargs)
+                if self._f:
+                    return self._f(*args, **kwargs)
+                return self._func(*args, **kwargs)
             except self._retry_on_exception:
                 current_retry_num += 1
 
