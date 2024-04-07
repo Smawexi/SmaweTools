@@ -36,7 +36,7 @@ class Retrying(object):
             self._func = self._func.__get__(instance, owner)
             return self
 
-        self._func = functools.partial(self._func, instance)
+        self._f = self._func.__get__(instance, owner)
         return self
 
     def __call__(self, *args, **kwargs):
@@ -48,7 +48,7 @@ class Retrying(object):
                 if current_retry_num:
                     logging.info("\033[1;34mThis is currently the {} retry\033[0m".format(current_retry_num))
                     time.sleep(random.uniform(self._wait_random_min, self._wait_random_max))
-                return self._func(*args, **kwargs)
+                return self._f(*args, **kwargs)
             except self._retry_on_exception:
                 current_retry_num += 1
 
