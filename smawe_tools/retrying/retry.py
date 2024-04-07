@@ -33,10 +33,11 @@ class Retrying(object):
 
     def __get__(self, instance, owner=None):
         if isinstance(self._func, (staticmethod, classmethod)):
-            self._func = self._func.__get__(instance, owner)
+            self._f = self._func.__get__(instance, owner)
             return self
 
-        self._f = self._func.__get__(instance, owner)
+        self._f = functools.partial(self._func, instance)
+
         return self
 
     def __call__(self, *args, **kwargs):
