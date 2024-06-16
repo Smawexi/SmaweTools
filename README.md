@@ -158,6 +158,17 @@ error_logger.info("test message")
 # 然后你的QQ邮箱会收到这样类似的消息
 # test.py <module> INFO: (45)test message...
 ```
+高级邮件api, 默认支持qq, 163邮箱, 可发送文本和多个附件  
+```python
+from smawe_tools.utils import EmailHelper
+
+user = 'xxxx@163.com'
+password = 'xxxxxx'
+# file可以是路径或者一个文件对象或者文件内容
+file = open('xxx.txt')
+email_helper = EmailHelper(user=user, password=password)
+email_helper.send_mail('This is test mail.', to=['xxxx@qq.com'], subject='python test', file=file, file_name='filename')
+```
 
 ---
 此包还提供了一个对配置进行读取和保存的子模块smawe_tools.config  
