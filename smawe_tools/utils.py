@@ -65,7 +65,6 @@ class ErrorLogger:
         error_logger = logging.getLogger("error_logger")
         error_logger.setLevel(kwargs.pop("logger_level", logging.INFO))
         error_logger.addHandler(smtp_handler)
-        error_logger.email_helper = EmailHelper(user=from_addr, password=password)
         return error_logger
 
 
@@ -167,3 +166,15 @@ class EmailHelper:
             filename=file_name
         )
         return msg
+
+    def close(self):
+        """close smtp connection"""
+        self.smtp_client.quit()
+
+    def __del__(self):
+        try:
+            self.close()
+        except smtplib.SMTPServerDisconnected:
+            pass
+        except smtplib.SMTPException:
+            pass
