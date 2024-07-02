@@ -11,17 +11,7 @@ pip install smawe-tools
 
 ### **核心函数**
 以下函数都可以从smawe_tools包中进行导入  
-例如: from smawe_tools import retry  
-
-- rename(src=""):  
-    对src路径指定的目录中的文件进行重命名(支持绝对路径和相对路径)  
-    格式为第xxx章  
-    第某某章必须在一亿章以下  
-    例如:  
-        &ensp;&ensp;&ensp;&ensp;第一百章.txt -> 第100章.txt   
-        &ensp;&ensp;&ensp;&ensp;第两千零一章.txt -> 第2001章.txt  
-
-
+例如: from smawe_tools import retry
 - text_conversion(s):  
     功能: 文本转换  
     描述: 如果s为空, 则返回0.  

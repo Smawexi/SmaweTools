@@ -78,7 +78,6 @@ class EmailHelper:
         :param host: smtp host
         :param port: smtp port
         """
-        self.user = user
         brand = None
         pattern = '@([^\.]*)\.'
         match_obj = re.search(pattern, user)
@@ -93,21 +92,24 @@ class EmailHelper:
             except KeyError:
                 pass
 
+        self._user = user
+        self._password = password
         if config is not None:
-            host = config.get('host')
-            port = config.get('port')
-            self.smtp_client = smtplib.SMTP_SSL(host=host, port=port)
-            self.smtp_client.login(user=user, password=password)
+            self._host = config.get('host')
+            self._port = config.get('port')
+            self._smtp_client = smtplib.SMTP_SSL(host=self._host, port=self._port)
+            self._smtp_client.login(user=user, password=password)
             return
 
         if host is None:
             raise ValueError('Require following params: host')
 
+        self._host = host
         if port is None:
-            port = 465
+            self._port = 465
 
-        self.smtp_client = smtplib.SMTP_SSL(host=host, port=port)
-        self.smtp_client.login(user=user, password=password)
+        self._smtp_client = smtplib.SMTP_SSL(host=self._host, port=self._port)
+        self._smtp_client.login(user=user, password=password)
 
     def send_mail(
             self, message: str, to: List[str] = None, subject: str = None,
@@ -127,9 +129,9 @@ class EmailHelper:
         """
         msg = EmailMessage()
         msg['Subject'] = subject
-        msg['From'] = self.user
+        msg['From'] = self._user
         if to is None:
-            to = [self.user]
+            to = [self._user]
         msg['To'] = ', '.join(to)
         msg.set_content(message)
         if file is not None:
@@ -141,7 +143,15 @@ class EmailHelper:
 
             for file, file_name in zip(files, file_names):
                 msg = self.set_attachment(msg=msg, file=file, file_name=file_name)
-        self.smtp_client.send_message(msg=msg)
+
+        if not self.is_alive():
+            self._reconnect()
+
+        try:
+            self._smtp_client.send_message(msg=msg)
+        except smtplib.SMTPSenderRefused:
+            self._create_session()
+            self._smtp_client.send_message(msg=msg)
 
     def set_attachment(self, msg: EmailMessage, file: Union[str, bytes, File], file_name: str) -> EmailMessage:
         if isinstance(file, str):
@@ -167,9 +177,25 @@ class EmailHelper:
         )
         return msg
 
+    def _reconnect(self):
+        return self._smtp_client.connect(self._host, self._port)
+
+    def is_alive(self):
+        try:
+            response_code, response_message = self._smtp_client.docmd('noop')
+            if response_code == 250:
+                return True
+            return False
+        except smtplib.SMTPServerDisconnected:
+            return False
+
+    def _create_session(self):
+        self._smtp_client = smtplib.SMTP_SSL(self._host, self._port)
+        self._smtp_client.login(self._user, self._password)
+
     def close(self):
         """close smtp connection"""
-        self.smtp_client.quit()
+        self._smtp_client.quit()
 
     def __del__(self):
         try:
