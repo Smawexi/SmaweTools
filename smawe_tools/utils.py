@@ -105,7 +105,8 @@ class EmailHelper:
             raise ValueError('Require following params: host')
 
         self._host = host
-        if port is None:
+        self._port = port
+        if self._port is None:
             self._port = 465
 
         self._smtp_client = smtplib.SMTP_SSL(host=self._host, port=self._port)
