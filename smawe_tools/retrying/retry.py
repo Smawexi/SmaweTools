@@ -43,9 +43,10 @@ class Retrying(object):
 
     def __call__(self, *args, **kwargs):
         current_retry_num = 0
+        last_exception = None
         while True:
             if current_retry_num > self._stop_max_attempt_number:
-                raise _exception.MaxRetryError("Exceeded maximum retry count error")
+                raise _exception.MaxRetryError("Exceeded maximum retry count error", last_exception=last_exception)
             try:
                 if current_retry_num:
                     logging.info("\033[1;34mThis is currently the {} retry\033[0m".format(current_retry_num))
@@ -53,7 +54,8 @@ class Retrying(object):
                 if self._f:
                     return self._f(*args, **kwargs)
                 return self._func(*args, **kwargs)
-            except self._retry_on_exception:
+            except self._retry_on_exception as e:
+                last_exception = e
                 current_retry_num += 1
 
 
@@ -71,7 +73,8 @@ def retry(
     """
     if retry_on_exception is None:
         retry_on_exception = kwargs.get('retry_exception')
-        warnings.warn("retry_exception param was deprecated, please use retry_on_exception param",  category=DeprecationWarning, stacklevel=2)
+        if retry_on_exception:
+            warnings.warn("retry_exception param was deprecated, please use retry_on_exception param",  category=DeprecationWarning, stacklevel=2)
 
     _kwargs = _merger_setting(
         stop_max_attempt_number=stop_max_attempt_number, wait_random_min=wait_random_min,
