@@ -1,4 +1,6 @@
+import asyncio
 import functools
+import inspect
 import time
 import random
 import logging
@@ -17,15 +19,16 @@ class Retrying(object):
             wait_random_max=None,
             retry_on_exception=None,
     ):
-        if not callable(func) and not isinstance(func, (classmethod, staticmethod)):
+        raw_func = func.__func__ if isinstance(func, (classmethod, staticmethod)) else func
+        if not callable(raw_func):
             raise ValueError("func param error")
+
+        self._is_async = inspect.iscoroutinefunction(raw_func)
+        # 普通函数有意义, 其他情况忽略
         functools.update_wrapper(self, func)
         self._func = func
-        self._f = None
         self._retry_on_exception = retry_on_exception if retry_on_exception is not None else Exception
-
         self._stop_max_attempt_number = stop_max_attempt_number if stop_max_attempt_number else 1
-
         self._wait_random_min = wait_random_min / 1000 if isinstance(wait_random_min, int) else 0
         self._wait_random_max = wait_random_max / 1000 if isinstance(wait_random_max, int) else 1
         if self._wait_random_max <= self._wait_random_min:
@@ -33,30 +36,55 @@ class Retrying(object):
 
     def __get__(self, instance, owner=None):
         if isinstance(self._func, (staticmethod, classmethod)):
-            self._f = self._func.__get__(instance, owner)
-            functools.update_wrapper(self, self._f)
-            return self
+            _f = self._func.__get__(instance, owner)
+            return self._make_executor(_f)
 
-        self._f = functools.partial(self._func, instance)
-        functools.update_wrapper(self, self._func)
-        return self
+        _f = functools.partial(self._func, instance)
+        functools.update_wrapper(_f, self._func)
+        return self._make_executor(_f)
 
     def __call__(self, *args, **kwargs):
-        current_retry_num = 0
-        last_exception = None
-        while True:
-            if current_retry_num > self._stop_max_attempt_number:
-                raise _exception.MaxRetryError("Exceeded maximum retry count error", last_exception=last_exception)
-            try:
-                if current_retry_num:
-                    logging.info("\033[1;34mThis is currently the {} retry\033[0m".format(current_retry_num))
-                    time.sleep(random.uniform(self._wait_random_min, self._wait_random_max))
-                if self._f:
-                    return self._f(*args, **kwargs)
-                return self._func(*args, **kwargs)
-            except self._retry_on_exception as e:
-                last_exception = e
-                current_retry_num += 1
+        return self._make_executor(self._func)(*args, **kwargs)
+
+    def _make_executor(self, target_func):
+        if self._is_async:
+            @functools.wraps(target_func)
+            async def async_wrapper(*args, **kwargs):
+                current_retry_num = 0
+                last_exception = None
+                while True:
+                    if current_retry_num > self._stop_max_attempt_number:
+                        raise _exception.MaxRetryError("Exceeded maximum retry count error", last_exception=last_exception)
+                    try:
+                        if current_retry_num:
+                            logging.info("\033[1;34mThis is currently the {} retry\033[0m".format(current_retry_num))
+                            await asyncio.sleep(random.uniform(self._wait_random_min, self._wait_random_max))
+
+                        return await target_func(*args, **kwargs)
+                    except self._retry_on_exception as e:
+                        last_exception = e
+                        current_retry_num += 1
+
+            return async_wrapper
+
+        @functools.wraps(target_func)
+        def sync_wrapper(*args, **kwargs):
+            current_retry_num = 0
+            last_exception = None
+            while True:
+                if current_retry_num > self._stop_max_attempt_number:
+                    raise _exception.MaxRetryError("Exceeded maximum retry count error", last_exception=last_exception)
+                try:
+                    if current_retry_num:
+                        logging.info("\033[1;34mThis is currently the {} retry\033[0m".format(current_retry_num))
+                        time.sleep(random.uniform(self._wait_random_min, self._wait_random_max))
+
+                    return target_func(*args, **kwargs)
+                except self._retry_on_exception as e:
+                    last_exception = e
+                    current_retry_num += 1
+
+        return sync_wrapper
 
 
 def retry(
@@ -64,7 +92,7 @@ def retry(
     retry_on_exception=None, **kwargs
 ):
     """
-    异常重试装饰器, 0.3.6中添加了实例方法, 类方法, 静态方法的支持
+    异常重试装饰器, 0.3.6中添加了实例方法, 类方法, 静态方法的支持, 0.4.5中添加了异步支持
     :param stop_max_attempt_number: 最大重试次数(默认为1次)
     :param wait_random_min: 重试间隔的随机等待最小时间(默认为0s), 单位毫秒
     :param wait_random_max: 重试间隔的随机等待最大时间(默认为1s), 单位毫秒

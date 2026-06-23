@@ -33,7 +33,7 @@ pip install smawe-tools
 
 
 - retry(stop_max_attempt_number=None, wait_random_min=None, wait_random_max=None, retry_on_exception=None):  
-    0.3.6中添加了实例方法, 类方法, 静态方法的支持  
+    0.3.6中添加了实例方法, 类方法, 静态方法的支持, 0.4.5中添加了异步支持(线程/并发安全)  
     发生异常进行重试，默认进行1次重试且每次重试前睡眠0-1s的随机时间，超过最大重试次数后还发生异常，则抛出MaxRetryError异常 
     重试期间如果正常返回结果或没发生异常，则不进行重试。
     stop_max_attempt_number: 停止时的最大重试次数，超出次数后还发生异常，则抛出MaxRetryError异常  
@@ -105,6 +105,11 @@ pip install smawe-tools
     ... # 如果发生异常，则进行重试，每次重试前休眠1-3s的随机时间
     ...
     >>>
+    >>> @retry()
+    >>> async def f():
+    ...     pass
+    ... 
+    >>> 
 
 ---
 #### 示例2
